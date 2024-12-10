@@ -1,4 +1,4 @@
-<img src="C:\git\smooth-night\src\main\resources\assets\smooth-night\icon.png" width="128" height="128">
+<img src="C:\git\smooth-night\src\main\resources\assets\smooth-night\icon.png"/>
 
 # Smooth Night
 
