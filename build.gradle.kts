@@ -1,5 +1,3 @@
-import org.gradle.kotlin.dsl.accessors.runtime.addDependencyTo
-
 plugins {
 	id("fabric-loom") version "1.9-SNAPSHOT"
 	id("maven-publish")
