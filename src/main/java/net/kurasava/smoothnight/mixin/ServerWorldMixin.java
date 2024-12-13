@@ -18,11 +18,11 @@ import net.minecraft.util.profiler.Profiler;
 import net.minecraft.village.raid.RaidManager;
 import net.minecraft.world.EntityList;
 import net.minecraft.world.GameRules;
+import net.minecraft.world.World;
 import net.minecraft.world.tick.TickManager;
 import net.minecraft.world.tick.WorldTickScheduler;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
-import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.*;
+import org.spongepowered.asm.mixin.gen.Invoker;
 
 import java.util.List;
 import java.util.function.BooleanSupplier;
@@ -32,20 +32,52 @@ public abstract class ServerWorldMixin {
 
     private SmoothNight INSTANCE = SmoothNight.INSTANCE;
 
+    @Final
+    @Shadow
+    private SleepManager sleepManager;
+
+    @Shadow
+    private boolean inBlockTick;
+
+    @Final
+    @Shadow
+    List<ServerPlayerEntity> players;
+
+    @Final
+    @Shadow
+    private WorldTickScheduler<Block> blockTickScheduler;
+
+    @Final
+    @Shadow
+    private WorldTickScheduler<Fluid> fluidTickScheduler;
+
+    @Final
+    @Shadow
+    protected RaidManager raidManager;
+
+    @Shadow
+    private int idleTimeout;
+
+    @Shadow
+    private EnderDragonFight enderDragonFight;
+
+    @Final
+    @Shadow
+    EntityList entityList;
+
+    @Final
+    @Shadow
+    private ServerChunkManager chunkManager;
+
+    @Final
+    @Shadow
+    private ServerEntityManager<Entity> entityManager;
+
     @Shadow
     public abstract void setTimeOfDay(long timeOfDay);
 
     @Shadow
-    protected SleepManager sleepManager;
-
-    @Shadow
-    protected boolean inBlockTick;
-
-    @Shadow
-    protected List<ServerPlayerEntity> players;
-
-    @Shadow
-    protected abstract TickManager getTickManager();
+    public abstract TickManager getTickManager();
 
     @Shadow
     protected abstract void wakeSleepingPlayers();
@@ -57,52 +89,28 @@ public abstract class ServerWorldMixin {
     protected abstract void tickTime();
 
     @Shadow
-    public abstract void tickBlock(BlockPos pos, Block block);
+    protected abstract void tickBlock(BlockPos pos, Block block);
 
     @Shadow
-    public abstract void tickFluid(BlockPos pos, Fluid fluid);
+    protected abstract void tickFluid(BlockPos pos, Fluid fluid);
 
     @Shadow
-    protected WorldTickScheduler<Block> blockTickScheduler;
-
-    @Shadow
-    protected WorldTickScheduler<Fluid> fluidTickScheduler;
-
-    @Shadow
-    protected RaidManager raidManager;
-
-    @Shadow
-    protected abstract ServerChunkManager getChunkManager();
+    public abstract ServerChunkManager getChunkManager();
 
     @Shadow
     protected abstract void processSyncedBlockEvents();
 
     @Shadow
-    protected abstract LongSet getForcedChunks();
+    public abstract LongSet getForcedChunks();
 
     @Shadow
-    protected abstract void resetIdleTimeout();
-
-    @Shadow
-    protected int idleTimeout;
-
-    @Shadow
-    protected EnderDragonFight enderDragonFight;
-
-    @Shadow
-    protected EntityList entityList;
+    public abstract void resetIdleTimeout();
 
     @Shadow
     protected abstract boolean shouldCancelSpawn(Entity entity);
 
     @Shadow
-    protected ServerChunkManager chunkManager;
-
-    @Shadow
-    protected abstract void tickEntity(Entity entity);
-
-    @Shadow
-    protected ServerEntityManager<Entity> entityManager;
+    public abstract void tickEntity(Entity entity);
 
     @Overwrite
     public void tick(BooleanSupplier shouldKeepTicking) {
@@ -191,8 +199,7 @@ public abstract class ServerWorldMixin {
                 }
             });
             profiler.pop();
-            WorldMixin world1 = (WorldMixin) (Object) this;
-            world1.tickBlockEntities();
+            ((WorldInvoker) world).tickBlockEntities();
         }
 
         profiler.push("entityManagement");
@@ -200,6 +207,7 @@ public abstract class ServerWorldMixin {
         profiler.pop();
     }
 
+    @Unique
     private void smoothNightSkip(ServerWorld world) {
         boolean doDayLightCycle = world.getGameRules().getBoolean(GameRules.DO_DAYLIGHT_CYCLE);
 
@@ -224,9 +232,16 @@ public abstract class ServerWorldMixin {
         }
     }
 
+    @Unique
     private void sendTimeUpdatePacket(long time, long timeOfDay) {
         for (ServerPlayerEntity player : this.players) {
             player.networkHandler.sendPacket(new WorldTimeUpdateS2CPacket(time, timeOfDay, true));
         }
     }
+}
+
+@Mixin(World.class)
+interface WorldInvoker {
+    @Invoker("tickBlockEntities")
+    void tickBlockEntities();
 }

@@ -1,5 +1,3 @@
-import org.gradle.kotlin.dsl.accessors.runtime.addDependencyTo
-
 plugins {
 	id("fabric-loom") version "1.9-SNAPSHOT"
 	id("maven-publish")
@@ -44,9 +42,6 @@ tasks.withType<JavaCompile>().configureEach {
 }
 
 java {
-	// Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
-	// if it is present.
-	// If you remove this line, sources will not be generated.
 	withSourcesJar()
 
 	sourceCompatibility = JavaVersion.VERSION_21
@@ -62,7 +57,6 @@ tasks.jar {
 
 }
 
-// configure the maven publication
 publishing {
 	publications {
 		create<MavenPublication>("mavenJava") {
