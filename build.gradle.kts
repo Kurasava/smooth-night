@@ -1,5 +1,5 @@
 plugins {
-	id("fabric-loom") version "1.9-SNAPSHOT"
+	id("fabric-loom") version "1.11-SNAPSHOT"
 	id("maven-publish")
 }
 
@@ -23,10 +23,10 @@ dependencies {
 	minecraft("com.mojang:minecraft:${project.property("minecraft_version")}")
 	mappings("net.fabricmc:yarn:${project.property("yarn_mappings")}:v2")
 	modImplementation("net.fabricmc:fabric-loader:${project.property("loader_version")}")
-	modApi("com.terraformersmc:modmenu:11.0.2")
+	modApi("com.terraformersmc:modmenu:${project.property("modmenu_version")}")
 	modImplementation("net.fabricmc.fabric-api:fabric-api:${project.property("fabric_version")}")
-	implementation("org.json:json:20240303")
-	"addtojar"("org.json:json:20240303")
+	implementation("org.json:json:${project.property("json_version")}")
+	"addtojar"("org.json:json:${project.property("json_version")}")
 }
 
 tasks.processResources {
@@ -42,9 +42,6 @@ tasks.withType<JavaCompile>().configureEach {
 }
 
 java {
-	// Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
-	// if it is present.
-	// If you remove this line, sources will not be generated.
 	withSourcesJar()
 
 	sourceCompatibility = JavaVersion.VERSION_21
