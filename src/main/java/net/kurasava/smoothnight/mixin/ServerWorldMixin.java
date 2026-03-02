@@ -6,7 +6,7 @@ import net.minecraft.network.packet.s2c.play.WorldTimeUpdateS2CPacket;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.server.world.SleepManager;
-import net.minecraft.world.GameRules;
+import net.minecraft.world.rule.GameRules;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -42,15 +42,13 @@ public abstract class ServerWorldMixin {
             method = "tick",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/world/GameRules;getBoolean(Lnet/minecraft/world/GameRules$Key;)Z",
-                    ordinal = 0
+                    target = "Lnet/minecraft/server/world/SleepManager;canSkipNight(I)Z"
             ),
             cancellable = true
     )
     private void onTickTimeSkip(BooleanSupplier shouldKeepTicking, CallbackInfo ci) {
         ServerWorld world = (ServerWorld) (Object) this;
-        int i = world.getGameRules().getInt(GameRules.PLAYERS_SLEEPING_PERCENTAGE);
-
+        int i = world.getGameRules().getValue(GameRules.PLAYERS_SLEEPING_PERCENTAGE);
         if (this.sleepManager.canSkipNight(i) && this.sleepManager.canResetTime(i, world.getPlayers())) {
             this.smoothNightSkip(world);
             ci.cancel();
@@ -60,7 +58,7 @@ public abstract class ServerWorldMixin {
 
     @Unique
     private void smoothNightSkip(ServerWorld world) {
-        boolean doDayLightCycle = world.getGameRules().getBoolean(GameRules.DO_DAYLIGHT_CYCLE);
+        boolean doDayLightCycle = world.getGameRules().getValue(GameRules.ADVANCE_TIME);
 
         if (doDayLightCycle) {
             long currentTime = world.getTimeOfDay();
@@ -74,7 +72,7 @@ public abstract class ServerWorldMixin {
             } else {
                 this.setTimeOfDay(targetTime);
                 this.wakeSleepingPlayers();
-                if (world.getGameRules().getBoolean(GameRules.DO_WEATHER_CYCLE)) {
+                if (world.getGameRules().getValue(GameRules.ADVANCE_WEATHER)) {
                     if ((world.isRaining() && INSTANCE.config.doSkipWeather) || world.isThundering()) {
                         world.resetWeather();
                     }
